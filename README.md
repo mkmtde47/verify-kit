@@ -36,6 +36,22 @@ npm run verify
 walk `src`, and tsx resolves the alias so convention tests can import app
 modules. The installer refuses to run without them and says why.
 
+> **This repo is private, so degit will print a warning and then succeed:**
+>
+> ```
+> ! tar snapshot download or extraction failed; falling back to git clone
+> > cloned mkmtde47/verify-kit#HEAD to .verify-kit
+> ```
+>
+> That is expected. degit's fast path fetches an unauthenticated tarball from
+> codeload, which 404s on a private repo; it then falls back to `git clone`,
+> which uses your existing credentials. **The second line is the one that
+> matters.** Verified end-to-end against the private remote: install → 16 tests
+> → green.
+>
+> If you ever make this repo public, the warning disappears and nothing else
+> changes.
+
 **Then break something.** The installer prints this and it is not decoration — a
 gate nobody has watched fire is indistinguishable from one that cannot fire:
 
