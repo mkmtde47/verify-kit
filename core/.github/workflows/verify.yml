@@ -1,0 +1,59 @@
+# The second net. NOT the safety net.
+#
+# `npm run verify`, run locally before every push, is the authoritative gate.
+# This exists because a git worktree lies about test failures in a way a
+# single-root CI checkout cannot: a worktree resolves some packages from the
+# main checkout's node_modules and others from its own, so a motion/animation
+# library can pull a second React copy, null the hook dispatcher, and fail every
+# component-rendering test. Measured in the source app: 8 failures in a worktree,
+# 3,235/3,235 green in a clean clone of the same commit.
+#
+# It is deliberately not the safety net. GitHub Actions billing has been paused
+# on a repo before, and jobs then never start — silently. A gate that can be
+# switched off by a billing page is not a gate.
+#
+# PART OF `core/` — do not edit in a consuming repo.
+
+name: verify
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    # ONE job, not three. A second job means a second `npm ci`, and on a repo
+    # where Actions billing has lapsed before, cheap matters.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+        env:
+          # tsc peaks well over the default heap on a mid-size Next.js app, and
+          # a constrained CI builder OOMs where a dev laptop does not.
+          NODE_OPTIONS: --max-old-space-size=6144
+
+      # `if: '!cancelled()'` on every step after the first, so ONE push surfaces
+      # all three classes of breakage. Without it a type error hides the test
+      # result, you fix the types, push, and only then learn the suite is red.
+      - name: Test harness
+        if: '!cancelled()'
+        run: node scripts/verify-harness.mjs
+
+      - name: Lint
+        if: '!cancelled()'
+        # `npx eslint` rather than `npm run lint` so this works whether or not
+        # the script exists. --max-warnings 0 is where the warn-level rules get
+        # their teeth: with a clean baseline, only newly written code can fail.
+        run: npx eslint . --max-warnings 0

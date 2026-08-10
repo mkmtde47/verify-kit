@@ -1,0 +1,71 @@
+# Verification
+
+> Installed by verify-kit. This file is governed:
+> `tests/unit/conventions/_kit-selfcheck.test.ts` asserts
+> every path and every `npm run` command named below actually exists. If you
+> rename something, this file fails the build until it is corrected — which is
+> the point. A rule naming a symbol that does not exist fails silently forever
+> and trains everyone to read the whole document as advisory.
+
+## The gate
+
+Before pushing any branch: `npm run verify` → typecheck, lint, harness, tests.
+
+It short-circuits on `&&`, so a red `tsc` hides the other three. Re-run after
+each fix.
+
+CI (`.github/workflows/verify.yml`) runs the same steps as a second net. It is
+**not** the safety net — Actions billing can lapse and jobs then never start.
+Local verification is authoritative.
+
+## Traps that make the gate lie
+
+- **A `tsc` error whose path starts with `.next/` is a stale artifact, not your
+  bug.** A dev server killed mid-write truncates a generated routes.d.ts that
+  tsconfig deliberately includes. It fails forever on one machine while CI stays
+  green. Fix: `rm -rf .next/dev/types` (gitignored, regenerates).
+- **A component-render failure in a git worktree is suspect until reproduced in
+  a single-root clone.** A worktree resolves some packages from the main
+  checkout's `node_modules` and others from its own; a second React copy nulls
+  the hook dispatcher. Measured elsewhere: 8 failures in a worktree, 0 in a clean
+  clone of the same commit. Same package versions in both, so a version diff
+  finds nothing — only the paths in the stack frames reveal it.
+- **When a script or dependency seems inexplicably absent, check the branch
+  before reinstalling.** A checkout sitting on a long-merged branch looks
+  completely normal while running months-old tooling. `git branch --show-current`
+  and `git rev-list --count HEAD..origin/main` first.
+
+## Adding a rule
+
+Bring the incident. Not "this seems risky" — the commit, the symptom, the cost.
+
+Then ask the two questions:
+
+1. **Is the failure silent?** Does violating it still typecheck and still pass
+   the suite?
+2. **Has it happened before, or would it be expensive once?**
+
+Both yes → write the check. Otherwise leave it as prose or leave it out.
+
+**Prove it fails before you trust it.** Break the invariant on purpose, watch it
+go red, revert, and say what you broke in the PR body. A rule that does not fire
+is worse than no rule — it buys false confidence.
+
+## Ratchets vs bans
+
+A fresh repo has no inherited debt, so its budgets are **0** and its rules are
+bans. That is correct and affordable exactly once.
+
+"Ratchet, don't ban" is a **retrofit** rule: it exists because a flat ban against
+a repo with 33 existing violations fails on day one and gets deleted, after which
+it enforces nothing. When you inherit debt, baseline it, block new violations,
+and reward fixing old ones by lowering the number. Never raise it.
+
+Give every ratchet deliberate slack. A guard that cries wolf gets removed.
+
+## Dormant guards
+
+`tests/unit/conventions/_dormant.ts` lists rules that do not apply to this repo
+yet, each with an executable wake condition. The self-check fails the build the
+moment one comes true. A rule that does not apply yet is a scheduled alarm, not
+an invisible hole.
