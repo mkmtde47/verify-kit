@@ -49,19 +49,19 @@ export const DORMANT: readonly DormantGuard[] = [
       "Copy examples/mdx-no-html-comments.test.ts into tests/unit/conventions/ and delete this entry.",
     wakes: () => walkFiles("src/content", [".mdx"]).length > 0,
   },
-  {
-    id: "dbconnect-coverage",
-    reason:
-      "Fewer than 10 server-action / API-route files. Human review still covers them at this size, " +
-      "and the scan floor cannot be set meaningfully yet.",
-    activate:
-      "Copy examples/dbconnect-coverage.test.ts into tests/unit/conventions/, set its floor to the " +
-      "current file count, and delete this entry.",
-    wakes: () =>
-      walkFiles("src/lib/actions", [".ts"]).length +
-        walkFiles("src/app/api", [".ts"]).length >=
-      10,
-  },
+  // `dbconnect-coverage` used to sit here, and it was a bug in two directions.
+  //
+  // It ships in seeds/ — install.mjs copies it, and it runs ACTIVE from day 0
+  // behind its own SCAN_FLOOR. So the entry claimed a guard was asleep while it
+  // was already enforcing. Worse, its wake condition (>= 10 action/API files)
+  // is met by any real app, so _kit-selfcheck would go red telling you to
+  // "activate" it by copying examples/dbconnect-coverage.test.ts — a path that
+  // has never existed.
+  //
+  // A guaranteed false alarm pointing at a missing file, inside the mechanism
+  // built to prevent exactly that. Left as a comment because the failure is
+  // more instructive than the fix: a dormant entry and a shipped seed are
+  // mutually exclusive, and nothing was checking which one a guard was.
   {
     id: "ai-durable-limit",
     reason: "No AI SDK usage yet, so there is no model spend to rate-limit.",
