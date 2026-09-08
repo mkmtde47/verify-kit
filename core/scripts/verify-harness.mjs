@@ -98,10 +98,28 @@ try {
 // ---------------------------------------------------------------------------
 // 3. Run the suite and read the TAP trailer. Zero tests is a failure here even
 //    though node:test considers it success.
+//
+//    `--test-reporter=tap` is LOAD-BEARING. This harness parses the TAP trailer
+//    (`# tests N`, `# fail N`) below, and node:test used to emit TAP whenever
+//    stdout was not a TTY — so leaving the reporter unset happened to work in
+//    CI, by accident, on Node 22 and earlier. Node 24 defaults to `spec`
+//    instead.
+//
+//    The failure that produces is maximally confusing: every test passes, the
+//    runner exits 0, and this harness reports "the suite may not have started
+//    at all" and exits 1. Worse, it is invisible locally on a Node 22 machine
+//    and only appears in CI, where the kit's own verify.yml pins Node 24 — so
+//    the gate that exists to catch a suite that did not run becomes the only
+//    thing failing.
+//
+//    Found in one consuming repo, fixed there as an `owned` override, and left
+//    unpropagated until a second repo hit the identical wall. Pinning the
+//    reporter makes the output deterministic across Node versions and TTY
+//    states: the harness parses exactly the format it asked for.
 // ---------------------------------------------------------------------------
 const run = spawnSync(
   "npx",
-  ["tsx", "--test", `${TEST_DIR}/**/*.test.ts`],
+  ["tsx", "--test", "--test-reporter=tap", `${TEST_DIR}/**/*.test.ts`],
   { encoding: "utf8", shell: false },
 );
 
