@@ -146,6 +146,37 @@ describe("verify-kit self-check", () => {
     );
   });
 
+  it("no dormant guard is already installed", () => {
+    // A guard cannot be both asleep and enforcing. When it is, two things go
+    // wrong at once and they mask each other: the DORMANT entry lies about
+    // coverage, and the moment its wake condition trips, the check above fires
+    // a false alarm telling you to activate something already running.
+    //
+    // This shipped in the kit itself. `dbconnect-coverage` sat in seeds/ (so
+    // install copied it, active from day 0) AND in DORMANT with a wake
+    // condition any real app meets — pointing at an activation file that had
+    // never existed. The alarm mechanism built to catch missing symbols was
+    // itself pointing at a missing symbol.
+    const installed = new Set(
+      walkFiles("tests/unit/conventions", [".test.ts"]).map((file) =>
+        path.basename(file, ".test.ts"),
+      ),
+    );
+
+    const contradictory = DORMANT.filter((guard) => installed.has(guard.id)).map(
+      (guard) =>
+        `  ${guard.id}: listed in _dormant.ts but tests/unit/conventions/${guard.id}.test.ts exists`,
+    );
+
+    assert.deepEqual(
+      contradictory,
+      [],
+      `A guard is both dormant and installed:\n${contradictory.join("\n")}\n\n` +
+        `Remove the _dormant.ts entry — the guard is already enforcing. A dormant entry\n` +
+        `is for a rule with nothing to enforce against YET, not for one that is running.`,
+    );
+  });
+
   it("no ratchet is tautological", () => {
     // A budget of 0 is CORRECT in a fresh repo — a ban, affordable exactly
     // because there is no inherited debt. The trap is the companion "keep the
