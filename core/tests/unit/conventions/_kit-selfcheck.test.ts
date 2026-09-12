@@ -130,8 +130,13 @@ describe("verify-kit self-check", () => {
   it("the scaffold README was replaced", () => {
     // WHY THIS IS A TEST AND NOT A LINE IN A CHECKLIST
     //
-    // `BOOTSTRAP.md` step 7c says to replace the `create-next-app` README. It
-    // said so as prose only, and prose does not fail a build — which is the
+    // `BOOTSTRAP.md` carries a step named "Replace the `create-next-app`
+    // README" — named here rather than numbered, because it has already moved
+    // once (it was 7c, it is now 5b) and a number inside this guard would go
+    // stale the next time the checklist is reordered. That is the exact rot
+    // this file punishes elsewhere; it should not ship inside the punisher.
+    //
+    // It said so as prose only, and prose does not fail a build — which is the
     // thesis this whole kit exists to enforce, so leaving this one unchecked
     // was the inconsistency.
     //
@@ -168,10 +173,11 @@ describe("verify-kit self-check", () => {
       found,
       [],
       `README.md is still the create-next-app placeholder.\n\nFound:\n${found.join("\n")}\n\n` +
-        `Replace it — BOOTSTRAP.md step 7c. One page, and only what the code cannot\n` +
-        `tell you: what the product is, the route groups mapped to who each serves,\n` +
-        `the read path and the write path, where things live when a name is\n` +
-        `ambiguous, \`npm run verify\`, and the traps that cost a day.\n\n` +
+        `Replace it — see BOOTSTRAP.md, the "Replace the create-next-app README"\n` +
+        `step. One page, and only what the code cannot tell you: what the product\n` +
+        `is, the route groups mapped to who each serves, the read path and the\n` +
+        `write path, where things live when a name is ambiguous, \`npm run verify\`,\n` +
+        `and the traps that cost a day.\n\n` +
         `Skip anything the code already says — a README that inventories directories\n` +
         `goes stale in a week and teaches the reader to distrust the rest of it.\n\n` +
         `If you genuinely need to mention the scaffold, word it differently: this\n` +
