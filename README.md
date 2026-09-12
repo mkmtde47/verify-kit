@@ -78,7 +78,7 @@ clobber it.
 
 | Guard | Enforces |
 |---|---|
-| `tests/unit/conventions/_kit-selfcheck.test.ts` | The kit's own claims, and the docs' claims |
+| `tests/unit/conventions/_kit-selfcheck.test.ts` | The kit's own claims, the docs' claims, and that the `create-next-app` README was replaced |
 | `tests/unit/conventions/file-size-budget.test.ts` | No file over 800 lines |
 | `tests/unit/conventions/timezone-budget.test.ts` | Every date format pins a `timeZone` |
 | `scripts/verify-harness.mjs` | The suite actually ran |

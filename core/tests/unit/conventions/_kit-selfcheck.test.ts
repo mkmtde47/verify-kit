@@ -127,6 +127,58 @@ describe("verify-kit self-check", () => {
     );
   });
 
+  it("the scaffold README was replaced", () => {
+    // WHY THIS IS A TEST AND NOT A LINE IN A CHECKLIST
+    //
+    // `BOOTSTRAP.md` step 7c says to replace the `create-next-app` README. It
+    // said so as prose only, and prose does not fail a build — which is the
+    // thesis this whole kit exists to enforce, so leaving this one unchecked
+    // was the inconsistency.
+    //
+    // Measured 2026-09-12 across the projects this kit came from: FOUR of ten
+    // repos still carried the untouched placeholder, one of them behind 207,000
+    // lines of code, 73 models, a payments integration and a POPIA surface.
+    // None was noticed, because a README is the one file nobody working in the
+    // repo ever opens. It is written for the person who is not here yet, and it
+    // is the first thing they read.
+    //
+    // The cost is not tidiness. In a junior-level navigation probe of that same
+    // codebase, "understand a domain concept from scratch" scored 4/10, and the
+    // reported cause was the absence of exactly what a README carries: nothing
+    // saying how a request flows from button to database.
+    //
+    // A MISSING README is deliberately not failed here. This checks one thing —
+    // that the generated placeholder was not left behind. A guard that quietly
+    // grew a second job is the harder one to trust later.
+    if (!existsSync(path.join(REPO_ROOT, "README.md"))) return;
+
+    // Both phrases ship in the same generated file, and either alone is enough:
+    // deleting the opening line while leaving the body is the common half-edit.
+    const PLACEHOLDER_MARKERS: ReadonlyArray<readonly [RegExp, string]> = [
+      [/bootstrapped with \[`?create-next-app/i, "the `bootstrapped with create-next-app` opening line"],
+      [/You can start editing the page by modifying/i, "the `start editing the page by modifying` hint"],
+    ];
+
+    const source = readSource("README.md");
+    const found = PLACEHOLDER_MARKERS.filter(([re]) => re.test(source)).map(
+      ([, label]) => `  ${label}`,
+    );
+
+    assert.deepEqual(
+      found,
+      [],
+      `README.md is still the create-next-app placeholder.\n\nFound:\n${found.join("\n")}\n\n` +
+        `Replace it — BOOTSTRAP.md step 7c. One page, and only what the code cannot\n` +
+        `tell you: what the product is, the route groups mapped to who each serves,\n` +
+        `the read path and the write path, where things live when a name is\n` +
+        `ambiguous, \`npm run verify\`, and the traps that cost a day.\n\n` +
+        `Skip anything the code already says — a README that inventories directories\n` +
+        `goes stale in a week and teaches the reader to distrust the rest of it.\n\n` +
+        `If you genuinely need to mention the scaffold, word it differently: this\n` +
+        `matches the generated text, not the tool's name.`,
+    );
+  });
+
   it("no dormant guard's wake condition has come true", () => {
     const woken = DORMANT.filter((g) => {
       try {
