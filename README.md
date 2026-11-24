@@ -91,7 +91,7 @@ the moment one comes true, so a rule that does not apply yet is a scheduled
 alarm rather than an invisible hole.
 
 `mdx-no-html-comments` · `dbconnect-coverage` · `ai-durable-limit` ·
-`job-registration-parity`
+`job-registration-parity` · `pdfjs-base64-auth-tokens`
 
 Run `node .verify-kit/install.mjs --report` for the live table.
 

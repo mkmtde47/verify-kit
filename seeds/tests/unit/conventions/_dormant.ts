@@ -92,4 +92,23 @@ export const DORMANT: readonly DormantGuard[] = [
       "registration, in both directions — an unregistered job never runs and nothing tells you.",
     wakes: () => walkFiles("src/lib/inngest/functions", [".ts"]).length > 0,
   },
+  {
+    id: "pdfjs-base64-auth-tokens",
+    reason: "The project does not bundle PDF.js alongside Auth.js/jose yet.",
+    activate:
+      "Copy examples/pdfjs-base64-auth-tokens.test.ts and point it at your PDF extraction entry point. " +
+      "PDF.js installs non-compliant Uint8Array base64 polyfills that jose prefers — one upload made " +
+      "every session cookie unreadable until restart.",
+    wakes: () => {
+      try {
+        const pkg = JSON.parse(readFileSync("package.json", "utf8")) as Record<string, Record<string, string> | undefined>;
+        const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+        const pdf = ["unpdf", "pdfjs-dist", "pdf-parse", "react-pdf"].some((d) => d in deps);
+        const auth = ["next-auth", "@auth/core", "jose"].some((d) => d in deps);
+        return pdf && auth;
+      } catch {
+        return false;
+      }
+    },
+  },
 ];
